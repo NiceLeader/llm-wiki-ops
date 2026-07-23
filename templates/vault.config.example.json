@@ -5,10 +5,10 @@
     "research/notes": "~/Documents/research-notes"
   },
   "areaTitles": {
-    "memory/my-project": "Memory — my-project",
-    "wiki": "Wiki — agent syntheses",
-    "events": "Events — daily journal",
-    "projects": "Projects — entry nodes"
+    "memory/my-project": "Memory - my-project",
+    "wiki": "Wiki - agent syntheses",
+    "events": "Events - daily journal",
+    "projects": "Projects - entry nodes"
   },
   "writeZones": ["wiki", "events", "projects"],
   "hotFile": "HOT.md",

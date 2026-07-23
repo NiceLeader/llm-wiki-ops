@@ -9,10 +9,10 @@ contract end-date that had been superseded four days earlier.
 ---
 
 You are running a SEMANTIC LINT of an Obsidian knowledge vault at {VAULT_PATH}
-— the Karpathy LLM-wiki "lint" operation: find contradictions, stale claims,
+- the Karpathy LLM-wiki "lint" operation: find contradictions, stale claims,
 and drift between pages. READ-ONLY: do not edit any file during the hunt.
 
-Scope (agent-written meta layer ONLY — do not lint junctioned source content):
+Scope (agent-written meta layer ONLY - do not lint junctioned source content):
 - {HOT_FILE} (the "read-first" current-context page)
 - projects/*.md (per-project entry nodes)
 - wiki/*.md (syntheses; skip wiki/digests/ except the newest one)
@@ -42,8 +42,8 @@ version strings, and status words you saw along the way.
 Be adversarial with yourself: before reporting a finding, verify the "newer
 truth" actually exists in a file you read (quote it). No speculative findings.
 
-Return a numbered list, most severe first. For each: [type] file — quoted
-stale/contradicting line — quoted evidence line from the newer source (file).
+Return a numbered list, most severe first. For each: [type] file - quoted
+stale/contradicting line - quoted evidence line from the newer source (file).
 Max 15 findings. If clean, say what you checked and that it is clean.
 
 ---

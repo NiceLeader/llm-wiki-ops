@@ -19,7 +19,7 @@ few hundred pages.
   No copy drift, self-healing when a target vanishes.
 - **Generated MOC hubs.** `hubs/` + `Home.md` are rebuilt from scratch on
   every refresh - the catalog cannot rot, duplicate basenames (`README.md`
-  × N) cannot collide, and Obsidian's graph gets a connected center instead
+  x N) cannot collide, and Obsidian's graph gets a connected center instead
   of confetti.
 - **Deterministic lint, zero tokens.** Dead-wikilink detection that resolves
   links the way Obsidian actually does (unique-basename matching, code fences

@@ -12,8 +12,8 @@ for agents it is plain markdown + wikilinks.
    daily journal (never edit backwards). `hubs/` + `Home.md` are GENERATED -
    never by hand.
 2. **Frontmatter is mandatory in new agent notes:** `type:`
-   (fact|synthesis|event) · `provenance:` (which agent, or human) ·
-   `created:` · `source:` (URL/path when there is one) · **`reviewed: false`**
+   (fact|synthesis|event) | `provenance:` (which agent, or human) |
+   `created:` | `source:` (URL/path when there is one) | **`reviewed: false`**
    (the human flips it to true after reading - the attention budget: refresh
    counts unreviewed notes and alerts when the pile grows). Facts atomically -
    one fact = one file; syntheses densely linked.
@@ -23,18 +23,18 @@ for agents it is plain markdown + wikilinks.
    not know chronology and will cite both.
 4. **Digests and syntheses cite sources** - a claim without a source does not
    enter; a digest flags assumptions vs facts, it does not confirm theses.
-5. **Agent entry path:** read `Home` → area hub → specific pages. Do not grep
+5. **Agent entry path:** read `Home` -> area hub -> specific pages. Do not grep
    the whole vault.
 6. **LLM-wiki operations:**
    - **INGEST with propagation:** a new fact touches ALL pages that cite it -
-     not just the one at hand. Propagation checklist: [[HOT]] (if hot) →
-     projects/ node → wiki/ topic pages → a line in [[log]].
+     not just the one at hand. Propagation checklist: [[HOT]] (if hot) ->
+     projects/ node -> wiki/ topic pages -> a line in [[log]].
    - **QUERY-compounding:** a good answer worked out in a session (analysis,
      comparison, decision research) becomes a wiki/ page with frontmatter -
      knowledge should compound, not evaporate with the context window.
    - **SEMANTIC LINT:** periodically (with the weekly digest) an agent hunts
      contradictions between pages, stale claims (newer events/ wins), orphans
-     and missing cross-links (prompt: `prompts/semantic-lint.md`). Result → a
+     and missing cross-links (prompt: `prompts/semantic-lint.md`). Result -> a
      `lint` line in [[log]]; fixes follow the supersedes discipline. The
      refresh script only catches dead links - this is the semantic layer no
      script sees.

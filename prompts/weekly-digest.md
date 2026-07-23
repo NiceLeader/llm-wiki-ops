@@ -9,13 +9,13 @@ runs the semantic lint in the same sitting.
 You are writing the weekly digest for vault {VAULT_PATH}, week {ISO_WEEK}.
 
 1. Sources: events/ notes of the week, log.md lines of the week, git log of
-   the vault for the week. Nothing else — the digest is a compression of
+   the vault for the week. Nothing else - the digest is a compression of
    recorded history, not a fresh recollection.
 2. Write wiki/digests/{YYYY}-W{WW}.md with frontmatter
    (`type: synthesis`, `provenance:`, `created:`, `period:`,
    `reviewed: false`).
 3. Voice rules: cite sources for every claim (event note / log line /
-   commit); flag assumptions vs facts; do not confirm theses — a digest that
+   commit); flag assumptions vs facts; do not confirm theses - a digest that
    only flatters the week's decisions is worthless.
 4. Link people/projects/topics with wikilinks so the digest becomes a hub of
    the week, not a dead end.

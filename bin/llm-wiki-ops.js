@@ -105,7 +105,7 @@ function titleOf(file, fallback) {
 function autoTitle(key) {
   const [head, ...rest] = key.split('/');
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  return rest.length ? cap(head) + ' — ' + rest.join('/') : cap(head);
+  return rest.length ? cap(head) + ' - ' + rest.join('/') : cap(head);
 }
 
 function buildHubs(vault, cfg) {
@@ -149,17 +149,17 @@ function buildHubs(vault, cfg) {
       }
       lines.push('');
     }
-    lines.push('', '→ [[Home]]');
+    lines.push('', '-> [[Home]]');
     const hubName = title.replace(/[^\p{L}\p{N} -]/gu, '').trim();
     fs.writeFileSync(path.join(HUBS, hubName + '.md'), lines.join('\n'));
     homeAreas.push({ area, title, hubName, count: files.length });
     hubCount++;
   }
 
-  const home = ['---', 'tags: [hub, home]', '---', '', '# Vault — Home', '',
+  const home = ['---', 'tags: [hub, home]', '---', '', '# Vault - Home', '',
     'Graph center of mass. Areas:', ''];
   for (const a of homeAreas) home.push('- [[hubs/' + a.hubName + '|' + a.title + ']] (' + a.count + ')');
-  home.push('', 'Vault law: [[INDEX]] · operations ledger: [[log]]', '');
+  home.push('', 'Vault law: [[INDEX]] | operations ledger: [[log]]', '');
   if (loose.length) {
     home.push('## Loose files', '');
     for (const f of loose) home.push('- ' + link(f, titleOf(f.full, f.rel)));
