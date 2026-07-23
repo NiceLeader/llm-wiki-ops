@@ -51,11 +51,14 @@ few hundred pages.
 ## Quickstart
 
 ```bash
-npx llm-wiki-ops init my-vault     # or: node bin/llm-wiki-ops.js init my-vault
+git clone https://github.com/NiceLeader/llm-wiki-ops
+node llm-wiki-ops/bin/llm-wiki-ops.js init my-vault
 cd my-vault
 # edit vault.config.json: point junctions at your real note/memory/docs dirs
-npx llm-wiki-ops refresh
+node ../llm-wiki-ops/bin/llm-wiki-ops.js refresh
 ```
+
+(Not on npm yet - clone is the install. When it lands on npm, `npx llm-wiki-ops` will work as-is.)
 
 Open the folder as an Obsidian vault. Re-run `refresh` after adding sources -
 or schedule it daily; the execution stamp (`.last-refresh.json`) lets any

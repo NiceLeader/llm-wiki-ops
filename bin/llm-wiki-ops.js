@@ -24,6 +24,16 @@ function expandHome(p) {
   return p.startsWith('~') ? path.join(os.homedir(), p.slice(1)) : p;
 }
 
+// Run a git command, never throw; optionally capture stdout.
+function execSyncSafe(cmd, cwd, capture) {
+  try {
+    return execSync(cmd, {
+      cwd, encoding: 'utf8',
+      stdio: capture ? ['ignore', 'pipe', 'ignore'] : 'ignore',
+    }) || '';
+  } catch { return ''; }
+}
+
 function loadConfig(vault) {
   const p = path.join(vault, 'vault.config.json');
   if (!fs.existsSync(p)) die('no vault.config.json in ' + vault + ' (run: llm-wiki-ops init)');
@@ -70,11 +80,18 @@ function ensureJunctions(vault, cfg) {
 }
 
 // --------------------------------------------------------------------- walk
+// Vault-structure dirs ('hubs', '.tools') are only special at the vault
+// ROOT - a junctioned source legitimately containing a dir named "hubs"
+// must not have that subtree silently dropped from catalogs and lint.
+// Truly-noise dirs (VCS, package caches) are skipped at every depth.
+const SKIP_ANYWHERE = new Set(['.obsidian', '.git', 'node_modules']);
 function* walk(vault, cfg, dir, rel) {
   let entries;
   try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return; }
   for (const e of entries) {
-    if (cfg.skipDirs.includes(e.name) || e.name.startsWith('.')) continue;
+    const atRoot = rel === '';
+    const skipHere = SKIP_ANYWHERE.has(e.name) || (atRoot && cfg.skipDirs.includes(e.name));
+    if (skipHere || e.name.startsWith('.')) continue;
     const full = path.join(dir, e.name);
     const r = rel ? rel + '/' + e.name : e.name;
     let isDir = e.isDirectory();
@@ -116,8 +133,11 @@ function buildHubs(vault, cfg) {
   const areaFiles = {};
   for (const k of areaKeys) areaFiles[k] = [];
   const loose = [];
+  // Root meta files are already linked from the law line - listing them
+  // under "Loose files" made every clean vault report loose files forever.
+  const META = new Set(['INDEX.md', 'Home.md', 'log.md', cfg.hotFile, 'vault.config.json']);
   for (const f of walk(vault, cfg, vault, '')) {
-    if (f.rel === 'INDEX.md' || f.rel === 'Home.md' || f.rel === 'vault.config.json') continue;
+    if (META.has(f.rel)) continue;
     const area = areaKeys
       .filter((k) => f.rel.startsWith(k + '/'))
       .sort((a, b) => b.length - a.length)[0];
@@ -150,7 +170,14 @@ function buildHubs(vault, cfg) {
       lines.push('');
     }
     lines.push('', '-> [[Home]]');
-    const hubName = title.replace(/[^\p{L}\p{N} -]/gu, '').trim();
+    // Sanitized titles can collide (identical areaTitles, or symbols-only
+    // titles reducing to the same string) - a collision would silently
+    // overwrite the earlier hub while Home still lists both. Dedupe with a
+    // numeric suffix; an empty result falls back to the area key.
+    let hubName = title.replace(/[^\p{L}\p{N} -]/gu, '').trim()
+      || area.replace(/[^\p{L}\p{N} -]/gu, ' ').trim() || 'area';
+    const taken = new Set(homeAreas.map((a) => a.hubName));
+    for (let n = 2; taken.has(hubName); n++) hubName = hubName.replace(/ \(\d+\)$/, '') + ' (' + n + ')';
     fs.writeFileSync(path.join(HUBS, hubName + '.md'), lines.join('\n'));
     homeAreas.push({ area, title, hubName, count: files.length });
     hubCount++;
@@ -216,6 +243,10 @@ function lint(vault, cfg) {
         // In markdown tables the alias pipe is escaped (\|) - strip the
         // trailing backslash the capture picks up in that case.
         const t = m[1].trim().replace(/\\$/, '');
+        // Links/embeds to non-markdown attachments ([[photo.png]], [[report.pdf]])
+        // are resolved by Obsidian against ALL files; our map only holds .md,
+        // so skip them instead of reporting permanent false-positive dead links.
+        if (/\.[a-z0-9]{2,5}$/i.test(t) && !/\.md$/i.test(t)) continue;
         if (!files.has(t) && !byBase.get(t)) {
           dead++;
           if (deadSamples.length < 5) deadSamples.push(path.basename(f) + ' -> [[' + t + ']]');
@@ -228,7 +259,12 @@ function lint(vault, cfg) {
   let digestAgeDays = null;
   try {
     const dd = path.join(vault, cfg.digestDir);
-    const newest = Math.max(...fs.readdirSync(dd).map((f) => fs.statSync(path.join(dd, f)).mtimeMs));
+    const entries = fs.readdirSync(dd);
+    // Empty digest dir must still age (else "never wrote the first digest"
+    // can never alarm): fall back to the directory's own mtime.
+    const newest = entries.length
+      ? Math.max(...entries.map((f) => fs.statSync(path.join(dd, f)).mtimeMs))
+      : fs.statSync(dd).mtimeMs;
     if (Number.isFinite(newest)) digestAgeDays = Math.round((Date.now() - newest) / 86400000);
   } catch {}
   // Attention budget: agent notes waiting for human review. The documented
@@ -251,7 +287,9 @@ function lint(vault, cfg) {
 function tripwire(vault, cfg) {
   if (!cfg.forbiddenTracked.length) return [];
   try {
-    const tracked = execSync('git ls-files', { cwd: vault, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).split('\n');
+    // -z: NUL-separated, unquoted - default core.quotePath mangles non-ASCII
+    // paths ("private/\305\274.md") and the prefix match silently misses them.
+    const tracked = execSync('git ls-files -z', { cwd: vault, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).split('\0');
     return tracked.filter((f) => cfg.forbiddenTracked.some((p) => f.startsWith(p)));
   } catch { return []; }
 }
@@ -262,30 +300,61 @@ function refresh(vault) {
   ensureJunctions(vault, cfg);
   buildHubs(vault, cfg);
 
+  // On Windows, git does NOT see directory junctions as symlinks - `git add -A`
+  // traverses them and stages every file inside the junction TARGETS (agent
+  // memories, private docs...). On Linux the same config stages only a link
+  // stub. Unless the user explicitly opts in to backing up junction content
+  // (git.includeJunctions: true), keep mounts out of the snapshot via a
+  // managed .gitignore block - same behavior on every platform, no surprises.
+  if (cfg.git.snapshot && cfg.git.includeJunctions !== true) {
+    const gi = path.join(vault, '.gitignore');
+    const BEGIN = '# BEGIN llm-wiki-ops junction mounts (managed - do not edit)';
+    const END = '# END llm-wiki-ops junction mounts';
+    const block = [BEGIN, ...Object.keys(cfg.junctions).map((m) => '/' + m + '/'), END].join('\n');
+    let txt = '';
+    try { txt = fs.readFileSync(gi, 'utf8'); } catch {}
+    const re = new RegExp(BEGIN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[\\s\\S]*?' + END);
+    const next = re.test(txt) ? txt.replace(re, block) : (txt.trimEnd() + '\n\n' + block + '\n');
+    if (next !== txt) fs.writeFileSync(gi, next);
+  }
+
+  // TRIPWIRE FIRST - before anything is committed or pushed. A guard that
+  // screams AFTER the push has already exfiltrated the forbidden file is a
+  // press release, not a guard (review finding; the incident this was born
+  // from went exactly that way).
+  execSyncSafe('git add -A', vault);
+  const forbiddenHits = tripwire(vault, cfg);
+  if (forbiddenHits.length) {
+    console.log('TRIPWIRE: ' + forbiddenHits.length + ' FORBIDDEN tracked path(s)! e.g. ' + forbiddenHits[0]);
+    execSyncSafe('git reset -q', vault); // unstage everything - nothing leaves
+  }
+
   let pushOk = null;
-  if (cfg.git.snapshot) {
+  if (cfg.git.snapshot && !forbiddenHits.length) {
     pushOk = false;
+    const hasRemote = execSyncSafe('git remote', vault, true).trim().length > 0;
     try {
-      execSync('git add -A', { cwd: vault, stdio: 'ignore' });
       try { execSync('git diff --cached --quiet', { cwd: vault, stdio: 'ignore' }); }
       catch {
         execSync('git commit -q -m "vault snapshot: ' + new Date().toISOString().slice(0, 16) + '"',
           { cwd: vault, stdio: 'ignore' });
       }
-      execSync('git push -q', { cwd: vault, stdio: 'ignore' });
-      pushOk = true;
-      console.log('backup: snapshot pushed.');
-    } catch { console.log('backup: FAILED (offline?) - stamp records it.'); }
+      if (!hasRemote) {
+        pushOk = null; // committed locally; nothing to push to - not a failure
+        console.log('backup: committed locally (no git remote configured - add one for offsite backup).');
+      } else {
+        execSync('git push -q', { cwd: vault, stdio: 'ignore' });
+        pushOk = true;
+        console.log('backup: snapshot pushed.');
+      }
+    } catch { console.log('backup: push FAILED (offline? no upstream? run `git push -u` once) - stamp records it.'); }
+  } else if (cfg.git.snapshot && forbiddenHits.length) {
+    console.log('backup: SKIPPED - tripwire hit, nothing was committed or pushed.');
   }
 
   const lintRes = lint(vault, cfg);
   if (lintRes.deadLinks) console.log('lint: ' + lintRes.deadLinks + ' dead wikilink(s): ' + lintRes.deadSamples.join('; '));
   if (lintRes.hotAgeDays > cfg.alerts.hotStaleDays) console.log('lint: ' + cfg.hotFile + ' not touched for ' + lintRes.hotAgeDays + ' days.');
-
-  const forbiddenHits = tripwire(vault, cfg);
-  if (forbiddenHits.length) {
-    console.log('TRIPWIRE: ' + forbiddenHits.length + ' FORBIDDEN tracked path(s)! e.g. ' + forbiddenHits[0]);
-  }
 
   // Execution stamp: external health checks verify freshness against this
   // (the "is it ACTUALLY updating" question). Local-only; gitignore it.

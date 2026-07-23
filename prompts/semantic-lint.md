@@ -1,4 +1,5 @@
 # Operation: SEMANTIC LINT
+n> Fill every `{PLACEHOLDER}` ({VAULT_PATH}, {HOT_FILE}, {DATE}, {ISO_WEEK}...) with your real values before running - these are templates for your agent, not literal commands.
 
 Run this prompt with your coding agent (Claude Code, Codex, ...) pointed at
 the vault, ideally right before the weekly digest. The refresh script catches

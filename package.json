@@ -22,5 +22,21 @@
     "ai-agents",
     "claude-code",
     "pkm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NiceLeader/llm-wiki-ops.git"
+  },
+  "homepage": "https://github.com/NiceLeader/llm-wiki-ops#readme",
+  "bugs": {
+    "url": "https://github.com/NiceLeader/llm-wiki-ops/issues"
+  },
+  "files": [
+    "bin/",
+    "templates/",
+    "prompts/",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
   ]
 }

@@ -90,6 +90,12 @@ fs.writeFileSync(path.join(sourceDir, 'beta.md'), 'no heading, first line become
 // --- tripwire ---------------------------------------------------------------
 {
   execFileSync('git', ['init', '-q'], { cwd: vault });
+  execFileSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-q', '--allow-empty', '-m', 'root'], { cwd: vault });
+  // enable snapshots so the ordering guarantee is actually exercised
+  const cfgPath = path.join(vault, 'vault.config.json');
+  const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+  cfg.git = { snapshot: true };
+  fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
   fs.mkdirSync(path.join(vault, 'private'), { recursive: true });
   fs.writeFileSync(path.join(vault, 'private', 'client-secret.md'), 'must never be tracked');
   execFileSync('git', ['add', '-A'], { cwd: vault });
@@ -97,6 +103,17 @@ fs.writeFileSync(path.join(sourceDir, 'beta.md'), 'no heading, first line become
   ok('tripwire fires on forbidden tracked path', out.includes('TRIPWIRE'));
   const stamp = JSON.parse(fs.readFileSync(path.join(vault, '.last-refresh.json'), 'utf8'));
   ok('stamp records the tripwire hit', stamp.forbiddenTracked >= 1);
+  // THE ordering guarantee (review HIGH): a tripwire hit must PREVENT the
+  // snapshot, not announce it after the push already exfiltrated the file.
+  ok('tripwire hit skips the snapshot entirely', out.includes('SKIPPED'));
+  const logOut = execFileSync('git', ['log', '--all', '--name-only', '--format='], { cwd: vault, encoding: 'utf8' });
+  ok('forbidden file never entered ANY commit', !logOut.includes('client-secret.md'));
+  // junction mounts are gitignored by default (managed block) so Windows
+  // junction traversal cannot stage private source content
+  const gi = fs.readFileSync(path.join(vault, '.gitignore'), 'utf8');
+  ok('managed .gitignore block excludes junction mounts', gi.includes('/research/notes/'));
+  fs.rmSync(path.join(vault, 'private'), { recursive: true, force: true });
+  execFileSync('git', ['add', '-A'], { cwd: vault });
 }
 
 // --- self-heal: dangling junction ------------------------------------------
