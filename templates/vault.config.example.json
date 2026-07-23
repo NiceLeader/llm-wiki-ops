@@ -1,0 +1,20 @@
+{
+  "junctions": {
+    "memory/my-project": "~/.claude/projects/MY-PROJECT-DIR/memory",
+    "docs/my-app": "~/code/my-app/docs",
+    "research/notes": "~/Documents/research-notes"
+  },
+  "areaTitles": {
+    "memory/my-project": "Memory — my-project",
+    "wiki": "Wiki — agent syntheses",
+    "events": "Events — daily journal",
+    "projects": "Projects — entry nodes"
+  },
+  "writeZones": ["wiki", "events", "projects"],
+  "hotFile": "HOT.md",
+  "digestDir": "wiki/digests",
+  "reviewFlagZones": ["wiki"],
+  "forbiddenTracked": [".smart-env/", "private/"],
+  "git": { "snapshot": false },
+  "alerts": { "ntfyTopic": null, "hotStaleDays": 7, "digestStaleDays": 8 }
+}

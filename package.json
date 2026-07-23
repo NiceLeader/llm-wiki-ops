@@ -1,0 +1,26 @@
+{
+  "name": "llm-wiki-ops",
+  "version": "0.1.0",
+  "description": "Operations engine for an agent-maintained Obsidian vault (Karpathy's LLM-wiki pattern): live junctions, generated MOC hubs, dead-link lint, attention budget, secrecy tripwire, and agent prompts for semantic lint / ingest propagation / weekly digests.",
+  "license": "Apache-2.0",
+  "author": "Maciej Lewandowski",
+  "bin": {
+    "llm-wiki-ops": "bin/llm-wiki-ops.js"
+  },
+  "scripts": {
+    "test": "node test/test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "obsidian",
+    "llm-wiki",
+    "karpathy",
+    "knowledge-base",
+    "second-brain",
+    "ai-agents",
+    "claude-code",
+    "pkm"
+  ]
+}

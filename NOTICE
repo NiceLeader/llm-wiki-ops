@@ -1,0 +1,5 @@
+llm-wiki-ops
+Copyright 2026 Maciej Lewandowski
+
+Operations engine for agent-maintained Obsidian vaults, extracted and
+generalized from the author's production knowledge-vault tooling.
