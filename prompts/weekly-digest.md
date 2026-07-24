@@ -1,5 +1,6 @@
 # Operation: WEEKLY DIGEST (+ lint)
-n> Fill every `{PLACEHOLDER}` ({VAULT_PATH}, {HOT_FILE}, {DATE}, {ISO_WEEK}...) with your real values before running - these are templates for your agent, not literal commands.
+
+> Fill every `{PLACEHOLDER}` ({VAULT_PATH}, {HOT_FILE}, {DATE}, {ISO_WEEK}...) with your real values before running - these are templates for your agent, not literal commands.
 
 Once a week (the refresh script alarms when the newest digest is older than
 your configured threshold), an agent compresses the week into one page and

@@ -1,5 +1,6 @@
 # Operation: INGEST with propagation
-n> Fill every `{PLACEHOLDER}` ({VAULT_PATH}, {HOT_FILE}, {DATE}, {ISO_WEEK}...) with your real values before running - these are templates for your agent, not literal commands.
+
+> Fill every `{PLACEHOLDER}` ({VAULT_PATH}, {HOT_FILE}, {DATE}, {ISO_WEEK}...) with your real values before running - these are templates for your agent, not literal commands.
 
 The single most common failure of an agent-maintained vault: a new fact lands
 on ONE page while every other page that cites it keeps asserting the old
